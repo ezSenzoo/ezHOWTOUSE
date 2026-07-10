@@ -5,9 +5,4 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <UseWPF>true</UseWPF>
   </PropertyGroup>
-
-
-  <ItemGroup>
-    <Resource Include="Assets\ezhowtouse-logo.png" />
-  </ItemGroup>
 </Project>
