@@ -58,7 +58,7 @@
                 </Grid.RowDefinitions>
 
                 <StackPanel Margin="5,10,0,25">
-                    <Image Source="Assets/ezHOWTOUSE_LOGO.png" Width="180" Height="50" Stretch="Uniform" HorizontalAlignment="Left" />
+                    <Image Source="Assets/logo.png" Width="180" Height="50" Stretch="Fill" HorizontalAlignment="Left" />
                 </StackPanel>
 
                 <StackPanel Grid.Row="1">

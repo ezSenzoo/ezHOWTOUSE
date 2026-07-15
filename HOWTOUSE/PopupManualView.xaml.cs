@@ -1,51 +1,46 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media.Imaging;
 
 namespace HOWTOUSE
 {
     public partial class PopupManualView : UserControl
     {
-        private readonly List<ManualItem> popupManualItems;
-        private readonly List<ManualItem> inquiryItems;
-        private readonly ObservableCollection<ManualItem> filteredPopupManualItems = new ObservableCollection<ManualItem>();
-        private readonly ObservableCollection<ManualItem> filteredInquiryItems = new ObservableCollection<ManualItem>();
-        private readonly ObservableCollection<string> popupComments = new ObservableCollection<string>();
+        private readonly ObservableCollection<PopupManualItem> popupManualItems = new ObservableCollection<PopupManualItem>();
+        private readonly ObservableCollection<PopupManualItem> filteredPopupManualItems = new ObservableCollection<PopupManualItem>();
+        private readonly ObservableCollection<PopupManualStep> editingSteps = new ObservableCollection<PopupManualStep>();
+        private readonly ObservableCollection<string> editingKeywords = new ObservableCollection<string>();
+        private PopupManualItem selectedPopupManualItem;
+        private bool isNewPopupManual;
 
         public PopupManualView()
         {
             InitializeComponent();
 
-            popupManualItems = CreatePopupManualItems();
-            inquiryItems = CreateInquiryItems();
-
             PopupGuideListBox.ItemsSource = filteredPopupManualItems;
-            InquiryListBox.ItemsSource = filteredInquiryItems;
-            PopupCommentListBox.ItemsSource = popupComments;
+            PopupStepItemsControl.ItemsSource = editingSteps;
+            PopupKeywordItemsControl.ItemsSource = editingKeywords;
 
+            SeedPopupManualItems();
             ApplyPopupManualFilter();
-            ApplyInquiryFilter();
             SelectManualTab("Popup");
         }
 
         public void SelectManualTab(string tabName)
         {
             bool isPopup = tabName == "Popup";
-
             PopupManualPanel.Visibility = isPopup ? Visibility.Visible : Visibility.Collapsed;
             InquiryPanel.Visibility = isPopup ? Visibility.Collapsed : Visibility.Visible;
 
             if (isPopup && PopupGuideListBox.SelectedItem == null && filteredPopupManualItems.Count > 0)
             {
                 PopupGuideListBox.SelectedIndex = 0;
-            }
-
-            if (!isPopup && InquiryListBox.SelectedItem == null && filteredInquiryItems.Count > 0)
-            {
-                InquiryListBox.SelectedIndex = 0;
             }
         }
 
@@ -57,18 +52,18 @@ namespace HOWTOUSE
         private void ApplyPopupManualFilter()
         {
             string keyword = PopupSearchTextBox == null ? string.Empty : PopupSearchTextBox.Text.Trim();
-            List<ManualItem> matches = popupManualItems
+            List<PopupManualItem> matches = popupManualItems
                 .Where(item => string.IsNullOrWhiteSpace(keyword) || item.Contains(keyword))
-                .OrderBy(item => item.Title)
+                .OrderBy(item => item.Message)
                 .ToList();
 
             filteredPopupManualItems.Clear();
-            foreach (ManualItem item in matches)
+            foreach (PopupManualItem item in matches)
             {
                 filteredPopupManualItems.Add(item);
             }
 
-            if (filteredPopupManualItems.Count > 0)
+            if (filteredPopupManualItems.Count > 0 && PopupGuideListBox.SelectedItem == null)
             {
                 PopupGuideListBox.SelectedIndex = 0;
             }
@@ -76,193 +71,404 @@ namespace HOWTOUSE
 
         private void PopupGuideListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            ManualItem item = PopupGuideListBox.SelectedItem as ManualItem;
-            if (item == null) return;
+            PopupManualItem item = PopupGuideListBox.SelectedItem as PopupManualItem;
+            if (item == null)
+            {
+                return;
+            }
 
-            PopupTitleTextBlock.Text = item.Title;
-            PopupSummaryTextBlock.Text = item.Summary;
-            PopupKeywordsTextBlock.Text = "키워드: " + item.KeywordsLabel;
-            PopupOwnerTextBlock.Text = item.Owner + " 담당자만 수정 가능합니다.";
-            PopupStepsItemsControl.ItemsSource = CreateGuideSteps(item.Steps);
+            LoadPopupManualItem(item);
         }
 
-        private void AddPopupCommentButton_Click(object sender, RoutedEventArgs e)
+        private void NewPopupManualButton_Click(object sender, RoutedEventArgs e)
         {
-            string text = PopupCommentInput.Text.Trim();
-            if (string.IsNullOrWhiteSpace(text)) return;
+            selectedPopupManualItem = null;
+            isNewPopupManual = true;
 
-            popupComments.Insert(0, string.Format("{0:yyyy-MM-dd HH:mm} · {1}: {2}", DateTime.Now, Environment.UserName, text));
-            PopupCommentInput.Text = string.Empty;
+            PopupGuideListBox.SelectedItem = null;
+            PopupCategoryComboBox.SelectedIndex = 0;
+            PopupMenuNameInput.Text = string.Empty;
+            PopupMessageInput.Text = string.Empty;
+            PopupSituationInput.Text = string.Empty;
+            PopupRequesterInput.Text = string.Empty;
+            PopupExtensionInput.Text = string.Empty;
+            PopupKeywordInput.Text = string.Empty;
+            editingKeywords.Clear();
+
+            editingSteps.Clear();
+            AddEditingStep(string.Empty);
         }
 
-        private void InquirySearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        private void AddPopupStepButton_Click(object sender, RoutedEventArgs e)
         {
-            ApplyInquiryFilter();
+            AddEditingStep(string.Empty);
         }
 
-        private void ApplyInquiryFilter()
+        private void PopupKeywordInput_PreviewKeyDown(object sender, KeyEventArgs e)
         {
-            string keyword = InquirySearchTextBox == null ? string.Empty : InquirySearchTextBox.Text.Trim();
-            List<ManualItem> matches = inquiryItems
-                .Where(item => string.IsNullOrWhiteSpace(keyword) || item.Contains(keyword))
-                .OrderBy(item => item.Title)
+            if (e.Key != Key.Enter)
+            {
+                return;
+            }
+
+            AddKeywordFromInput();
+            e.Handled = true;
+        }
+
+        private void RemovePopupKeywordButton_Click(object sender, RoutedEventArgs e)
+        {
+            string keyword = (sender as Button)?.Tag as string;
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                editingKeywords.Remove(keyword);
+            }
+        }
+
+        private void SavePopupManualButton_Click(object sender, RoutedEventArgs e)
+        {
+            AddKeywordFromInput();
+
+            string message = PopupMessageInput.Text.Trim();
+            string situation = PopupSituationInput.Text.Trim();
+
+            if (string.IsNullOrWhiteSpace(message) || string.IsNullOrWhiteSpace(situation))
+            {
+                MessageBox.Show("메시지 내용과 문제 상황을 입력해주세요.", "EZHOWTOUSE", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            List<PopupManualStep> savedSteps = editingSteps
+                .Where(step => !string.IsNullOrWhiteSpace(step.Text) || step.Images.Count > 0)
+                .Select(step => step.Clone())
                 .ToList();
 
-            filteredInquiryItems.Clear();
-            foreach (ManualItem item in matches)
+            if (savedSteps.Count == 0)
             {
-                filteredInquiryItems.Add(item);
+                MessageBox.Show("해결방안을 한 단계 이상 입력해주세요.", "EZHOWTOUSE", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
             }
 
-            if (filteredInquiryItems.Count > 0)
+            PopupManualItem target = selectedPopupManualItem;
+            if (isNewPopupManual || target == null)
             {
-                InquiryListBox.SelectedIndex = 0;
+                target = new PopupManualItem();
+                popupManualItems.Insert(0, target);
+            }
+
+            target.Update(
+                GetSelectedPopupCategory(),
+                PopupMenuNameInput.Text.Trim(),
+                message,
+                situation,
+                PopupRequesterInput.Text.Trim(),
+                PopupExtensionInput.Text.Trim(),
+                savedSteps,
+                string.Join(", ", editingKeywords));
+
+            selectedPopupManualItem = target;
+            isNewPopupManual = false;
+
+            ApplyPopupManualFilter();
+            PopupGuideListBox.SelectedItem = target;
+            PopupGuideListBox.Items.Refresh();
+        }
+
+        private void StepTextBox_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key != Key.V || (Keyboard.Modifiers & ModifierKeys.Control) != ModifierKeys.Control)
+            {
+                return;
+            }
+
+            if (!Clipboard.ContainsImage())
+            {
+                return;
+            }
+
+            TextBox textBox = sender as TextBox;
+            PopupManualStep step = textBox?.DataContext as PopupManualStep;
+            if (step == null)
+            {
+                return;
+            }
+
+            BitmapSource image = Clipboard.GetImage();
+            if (image == null)
+            {
+                return;
+            }
+
+            step.Images.Add(image);
+            e.Handled = true;
+        }
+
+        private void LoadPopupManualItem(PopupManualItem item)
+        {
+            selectedPopupManualItem = item;
+            isNewPopupManual = false;
+
+            SelectPopupCategory(item.Category);
+            PopupMenuNameInput.Text = item.MenuName;
+            PopupMessageInput.Text = item.Message;
+            PopupSituationInput.Text = item.Situation;
+            PopupRequesterInput.Text = item.Requester;
+            PopupExtensionInput.Text = item.ExtensionNumber;
+            PopupKeywordInput.Text = string.Empty;
+            LoadKeywords(item.Keywords);
+
+            editingSteps.Clear();
+            foreach (PopupManualStep step in item.Steps)
+            {
+                PopupManualStep editingStep = step.Clone();
+                editingStep.Number = editingSteps.Count + 1;
+                editingSteps.Add(editingStep);
+            }
+
+            if (editingSteps.Count == 0)
+            {
+                AddEditingStep(string.Empty);
             }
         }
 
-        private void InquiryListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void AddEditingStep(string text)
         {
-            ManualItem item = InquiryListBox.SelectedItem as ManualItem;
-            if (item == null) return;
-
-            InquiryTitleTextBlock.Text = item.Title;
-            InquirySummaryTextBlock.Text = item.Summary;
-            InquiryKeywordsTextBlock.Text = "키워드: " + item.KeywordsLabel;
-            InquiryStepsItemsControl.ItemsSource = CreateGuideSteps(item.Steps);
-        }
-
-        private void AddInquiryButton_Click(object sender, RoutedEventArgs e)
-        {
-            string text = NewInquiryInput.Text.Trim();
-            if (string.IsNullOrWhiteSpace(text)) return;
-
-            ManualItem item = new ManualItem(
-                "신규 문의사항",
-                "신규, 문의, 접수",
-                text,
-                "전산실",
-                new[] { "문의 내용을 확인합니다.", "담당자가 처리 가능 여부를 검토합니다.", "처리 결과를 사용자에게 안내합니다." });
-
-            inquiryItems.Insert(0, item);
-            NewInquiryInput.Text = string.Empty;
-            ApplyInquiryFilter();
-            InquiryListBox.SelectedItem = item;
-        }
-
-        private static List<GuideStep> CreateGuideSteps(IEnumerable<string> steps)
-        {
-            return steps.Select((step, index) => new GuideStep { Number = index + 1, Text = step }).ToList();
-        }
-
-        private static List<ManualItem> CreatePopupManualItems()
-        {
-            return new List<ManualItem>
+            editingSteps.Add(new PopupManualStep
             {
-                new ManualItem(
-                    "로그인 오류 팝업",
-                    "로그인, 비밀번호, 계정, 접근",
-                    "로그인 실패 또는 계정 잠금 팝업이 뜰 때 확인하는 절차입니다.",
-                    "계정 담당자",
-                    new[] {
-                        "팝업 메시지에 표시된 사용자 ID와 발생 시간을 확인합니다.",
-                        "계정 상태와 잠금 여부를 관리자 화면에서 조회합니다.",
-                        "필요 시 비밀번호 초기화 또는 잠금 해제를 진행합니다.",
-                        "동일 오류가 반복되면 처리 이력을 댓글로 남깁니다."
-                    }),
-                new ManualItem(
-                    "프린터 오류 메시지",
-                    "프린터, 출력, 용지, 연결",
-                    "출력 실패, 프린터 연결 안 됨, 용지 없음 메시지가 뜰 때 확인합니다.",
-                    "장비 담당자",
-                    new[] {
-                        "오류 메시지에 표시된 프린터 이름을 확인합니다.",
-                        "프린터 전원, 네트워크, 용지 상태를 점검합니다.",
-                        "사용자 PC의 기본 프린터와 드라이버 상태를 확인합니다.",
-                        "테스트 출력 후 결과를 댓글로 기록합니다."
-                    }),
-                new ManualItem(
-                    "시스템 접속 불가",
-                    "접속, 서버, 네트워크, 페이지",
-                    "시스템 접속 실패 또는 페이지가 열리지 않을 때 확인하는 절차입니다.",
-                    "시스템 담당자",
-                    new[] {
-                        "사용자가 접속한 URL과 발생 시간을 확인합니다.",
-                        "내부망에서 같은 주소 접속이 가능한지 확인합니다.",
-                        "서버 상태와 최근 배포 여부를 점검합니다.",
-                        "장애가 맞으면 공지 후 조치 이력을 남깁니다."
-                    })
-            };
+                Number = editingSteps.Count + 1,
+                Text = text
+            });
         }
 
-        private static List<ManualItem> CreateInquiryItems()
+        private void AddKeywordFromInput()
         {
-            return new List<ManualItem>
+            string keyword = PopupKeywordInput.Text.Trim();
+            if (string.IsNullOrWhiteSpace(keyword))
             {
-                new ManualItem(
-                    "비밀번호 초기화 요청",
-                    "비밀번호, 초기화, 로그인",
-                    "사용자가 비밀번호를 잊어버렸을 때 접수되는 대표 문의입니다.",
-                    "계정 담당자",
-                    new[] {
-                        "사용자 사번과 이름을 확인합니다.",
-                        "본인 확인 후 비밀번호 초기화 가능 여부를 판단합니다.",
-                        "초기화 완료 후 사용자에게 임시 비밀번호 또는 재설정 절차를 안내합니다."
-                    }),
-                new ManualItem(
-                    "메뉴 권한 요청",
-                    "권한, 메뉴, 접근, 사용자",
-                    "특정 메뉴가 보이지 않거나 접근할 수 없을 때 접수되는 문의입니다.",
-                    "권한 담당자",
-                    new[] {
-                        "요청 메뉴명과 필요한 사유를 확인합니다.",
-                        "사용자 부서와 직무 기준으로 권한 부여 가능 여부를 검토합니다.",
-                        "승인 후 권한을 반영하고 재로그인을 안내합니다."
-                    }),
-                new ManualItem(
-                    "자료 조회 결과가 다름",
-                    "조회, 데이터, 결과, 오류",
-                    "사용자가 조회한 결과가 예상과 다르다고 문의할 때 확인합니다.",
-                    "시스템 담당자",
-                    new[] {
-                        "조회 조건과 화면 캡처를 요청합니다.",
-                        "동일 조건으로 재현 가능한지 확인합니다.",
-                        "데이터 기준 또는 프로그램 오류 여부를 구분해 안내합니다."
-                    })
-            };
+                return;
+            }
+
+            bool alreadyExists = editingKeywords.Any(item => string.Equals(item, keyword, StringComparison.CurrentCultureIgnoreCase));
+            if (!alreadyExists)
+            {
+                editingKeywords.Add(keyword);
+            }
+
+            PopupKeywordInput.Text = string.Empty;
+        }
+
+        private void LoadKeywords(string keywords)
+        {
+            editingKeywords.Clear();
+            if (string.IsNullOrWhiteSpace(keywords))
+            {
+                return;
+            }
+
+            string[] parts = keywords
+                .Split(new[] { "," }, StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (string part in parts)
+            {
+                string keyword = part.Trim();
+                if (!string.IsNullOrWhiteSpace(keyword) && !editingKeywords.Contains(keyword))
+                {
+                    editingKeywords.Add(keyword);
+                }
+            }
+        }
+
+        private string GetSelectedPopupCategory()
+        {
+            ComboBoxItem item = PopupCategoryComboBox.SelectedItem as ComboBoxItem;
+            return item == null ? "진료/간호" : item.Content.ToString();
+        }
+
+        private void SelectPopupCategory(string category)
+        {
+            foreach (ComboBoxItem item in PopupCategoryComboBox.Items)
+            {
+                if (string.Equals(item.Content.ToString(), category, StringComparison.CurrentCultureIgnoreCase))
+                {
+                    PopupCategoryComboBox.SelectedItem = item;
+                    return;
+                }
+            }
+
+            PopupCategoryComboBox.SelectedIndex = 0;
+        }
+
+        private void SeedPopupManualItems()
+        {
+            PopupManualItem loginItem = new PopupManualItem();
+            loginItem.Update(
+                "일반관리",
+                "로그인",
+                "로그인 처리 중 오류가 발생했습니다.",
+                "사용자가 사번과 비밀번호를 입력한 뒤 로그인 버튼을 눌렀을 때 오류 팝업이 표시됩니다.",
+                "홍길동",
+                "1234",
+                new[]
+                {
+                    new PopupManualStep { Number = 1, Text = "사용자 사번이 CNLRRUSD 테이블에 존재하는지 확인합니다." },
+                    new PopupManualStep { Number = 2, Text = "AppSettings.json의 Database 접속 정보가 현재 MySQL 설정과 일치하는지 확인합니다." },
+                    new PopupManualStep { Number = 3, Text = "동일 오류가 반복되면 오류 메시지 전문과 발생 시간을 기록한 뒤 담당자에게 전달합니다." }
+                },
+                "로그인, 사번, 비밀번호, CNLRRUSD");
+            popupManualItems.Add(loginItem);
+
+            PopupManualItem printerItem = new PopupManualItem();
+            printerItem.Update(
+                "진료지원",
+                "프린터",
+                "프린터 연결을 확인할 수 없습니다.",
+                "출력 버튼을 눌렀을 때 프린터 연결 실패 메시지가 표시됩니다.",
+                "김민수",
+                "5678",
+                new[]
+                {
+                    new PopupManualStep { Number = 1, Text = "사용자 PC의 기본 프린터 설정을 확인합니다." },
+                    new PopupManualStep { Number = 2, Text = "프린터 전원, 네트워크 연결, 용지 상태를 확인합니다." },
+                    new PopupManualStep { Number = 3, Text = "테스트 페이지 출력 후 결과를 사용자에게 안내합니다." }
+                },
+                "프린터, 출력, 연결, 네트워크");
+            popupManualItems.Add(printerItem);
         }
     }
 
-    public class ManualItem
+    public class PopupManualItem : INotifyPropertyChanged
     {
-        public ManualItem(string title, string keywords, string summary, string owner, IEnumerable<string> steps)
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public string Category { get; private set; }
+        public string MenuName { get; private set; }
+        public string Message { get; private set; }
+        public string Situation { get; private set; }
+        public string Requester { get; private set; }
+        public string ExtensionNumber { get; private set; }
+        public string Keywords { get; private set; }
+        public ObservableCollection<PopupManualStep> Steps { get; private set; } = new ObservableCollection<PopupManualStep>();
+
+        public string KeywordsLabel
         {
-            Title = title;
-            Keywords = keywords;
-            Summary = summary;
-            Owner = owner;
-            Steps = steps.ToList();
+            get { return Keywords; }
         }
 
-        public string Title { get; private set; }
-        public string Keywords { get; private set; }
-        public string Summary { get; private set; }
-        public string Owner { get; private set; }
-        public List<string> Steps { get; private set; }
-        public string KeywordsLabel { get { return Keywords; } }
+        public string MetaLabel
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(MenuName))
+                {
+                    return Category;
+                }
+
+                return Category + " · " + MenuName;
+            }
+        }
+
+        public void Update(string category, string menuName, string message, string situation, string requester, string extensionNumber, IEnumerable<PopupManualStep> steps, string keywords)
+        {
+            Category = category;
+            MenuName = menuName;
+            Message = message;
+            Situation = situation;
+            Requester = requester;
+            ExtensionNumber = extensionNumber;
+            Keywords = keywords;
+
+            Steps.Clear();
+            int number = 1;
+            foreach (PopupManualStep step in steps)
+            {
+                PopupManualStep savedStep = step.Clone();
+                savedStep.Number = number++;
+                Steps.Add(savedStep);
+            }
+
+            OnPropertyChanged("Category");
+            OnPropertyChanged("MenuName");
+            OnPropertyChanged("MetaLabel");
+            OnPropertyChanged("Message");
+            OnPropertyChanged("Situation");
+            OnPropertyChanged("Requester");
+            OnPropertyChanged("ExtensionNumber");
+            OnPropertyChanged("Keywords");
+            OnPropertyChanged("KeywordsLabel");
+        }
 
         public bool Contains(string keyword)
         {
             StringComparison comparison = StringComparison.CurrentCultureIgnoreCase;
-            return Title.IndexOf(keyword, comparison) >= 0
-                || Keywords.IndexOf(keyword, comparison) >= 0
-                || Summary.IndexOf(keyword, comparison) >= 0
-                || Steps.Any(step => step.IndexOf(keyword, comparison) >= 0);
+            return (Message ?? string.Empty).IndexOf(keyword, comparison) >= 0
+                || (Category ?? string.Empty).IndexOf(keyword, comparison) >= 0
+                || (MenuName ?? string.Empty).IndexOf(keyword, comparison) >= 0
+                || (Situation ?? string.Empty).IndexOf(keyword, comparison) >= 0
+                || (Requester ?? string.Empty).IndexOf(keyword, comparison) >= 0
+                || (ExtensionNumber ?? string.Empty).IndexOf(keyword, comparison) >= 0
+                || (Keywords ?? string.Empty).IndexOf(keyword, comparison) >= 0
+                || Steps.Any(step => (step.Text ?? string.Empty).IndexOf(keyword, comparison) >= 0);
+        }
+
+        private void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 
-    public class GuideStep
+    public class PopupManualStep : INotifyPropertyChanged
     {
-        public int Number { get; set; }
-        public string Text { get; set; }
+        private int number;
+        private string text;
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public int Number
+        {
+            get { return number; }
+            set
+            {
+                number = value;
+                OnPropertyChanged("Number");
+                OnPropertyChanged("NumberLabel");
+            }
+        }
+
+        public string NumberLabel
+        {
+            get { return Number + "단계"; }
+        }
+
+        public string Text
+        {
+            get { return text; }
+            set
+            {
+                text = value;
+                OnPropertyChanged("Text");
+            }
+        }
+
+        public ObservableCollection<BitmapSource> Images { get; private set; } = new ObservableCollection<BitmapSource>();
+
+        public PopupManualStep Clone()
+        {
+            PopupManualStep clone = new PopupManualStep
+            {
+                Number = Number,
+                Text = Text
+            };
+
+            foreach (BitmapSource image in Images)
+            {
+                clone.Images.Add(image);
+            }
+
+            return clone;
+        }
+
+        private void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
     }
 }

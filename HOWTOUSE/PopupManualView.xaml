@@ -13,21 +13,121 @@
             <Setter Property="Padding" Value="18" />
         </Style>
         <Style x:Key="PrimaryButton" TargetType="Button">
-            <Setter Property="Background" Value="#2563EB" />
+            <Setter Property="Background" Value="#0E91F5" />
             <Setter Property="Foreground" Value="White" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Padding" Value="14,9" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Cursor" Value="Hand" />
         </Style>
-        <Style x:Key="TabButton" TargetType="Button">
+        <Style x:Key="SmallActionButton" TargetType="Button">
+            <Setter Property="Background" Value="#EFF6FF" />
+            <Setter Property="Foreground" Value="#0E91F5" />
+            <Setter Property="BorderBrush" Value="#BFDBFE" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="8,5" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Height" Value="28" />
+        </Style>
+        <Style x:Key="KeywordChipRemoveButton" TargetType="Button">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="Foreground" Value="#64748B" />
             <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="16,9" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Padding" Value="4,0,0,0" />
+            <Setter Property="FontWeight" Value="Bold" />
             <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style x:Key="FieldLabel" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="#0F172A" />
+            <Setter Property="Margin" Value="0,0,0,5" />
+        </Style>
+        <Style x:Key="StretchListBoxItem" TargetType="ListBoxItem">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+        </Style>
+        <Style x:Key="CategoryComboBox" TargetType="ComboBox">
+            <Setter Property="Background" Value="White" />
+            <Setter Property="Foreground" Value="#0F172A" />
+            <Setter Property="BorderBrush" Value="#CBD5E1" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="MinHeight" Value="36" />
+            <Setter Property="Padding" Value="10,7" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <ToggleButton x:Name="ToggleButton"
+                                          IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                          ClickMode="Press"
+                                          Focusable="False"
+                                          Background="Transparent"
+                                          BorderThickness="0">
+                                <Border x:Name="ComboBorder"
+                                        Background="{TemplateBinding Background}"
+                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                        CornerRadius="6"
+                                        MinHeight="{TemplateBinding MinHeight}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="30" />
+                                        </Grid.ColumnDefinitions>
+                                        <ContentPresenter Margin="{TemplateBinding Padding}"
+                                                          HorizontalAlignment="Left"
+                                                          VerticalAlignment="Center"
+                                                          Content="{TemplateBinding SelectionBoxItem}"
+                                                          ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                                          ContentStringFormat="{TemplateBinding SelectionBoxItemStringFormat}" />
+                                        <Path Grid.Column="1"
+                                              Data="M 0 0 L 4 4 L 8 0 Z"
+                                              Fill="#64748B"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center" />
+                                    </Grid>
+                                </Border>
+                            </ToggleButton>
+                            <Popup x:Name="Popup"
+                                   IsOpen="{TemplateBinding IsDropDownOpen}"
+                                   Placement="Bottom"
+                                   PlacementTarget="{Binding ElementName=ToggleButton}"
+                                   AllowsTransparency="True"
+                                   Focusable="False"
+                                   PopupAnimation="Slide">
+                                <Border Background="White"
+                                        BorderBrush="#CBD5E1"
+                                        BorderThickness="1"
+                                        CornerRadius="6"
+                                        Margin="0,4,0,0"
+                                        MinWidth="{Binding ActualWidth, ElementName=ToggleButton}">
+                                    <ScrollViewer MaxHeight="220">
+                                        <ItemsPresenter />
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ComboBorder" Property="BorderBrush" Value="#93C5FD" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                <Setter TargetName="ComboBorder" Property="BorderBrush" Value="#0E91F5" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style TargetType="ComboBoxItem">
+            <Setter Property="Padding" Value="10,8" />
+            <Setter Property="FontSize" Value="14" />
         </Style>
         <Style TargetType="TextBox">
             <Setter Property="BorderBrush" Value="#CBD5E1" />
@@ -45,101 +145,13 @@
 
         <StackPanel Margin="0,0,0,18">
             <TextBlock Text="사용자 매뉴얼" FontSize="28" FontWeight="Bold" Foreground="#0F172A" />
-            <TextBlock Text="사용자가 자주 겪는 팝업 메시지와 문의사항을 검색하고 처리 절차를 확인합니다."
+            <TextBlock Text="팝업 메시지와 문의사항을 검색하고 처리 절차를 관리합니다."
                        Margin="0,6,0,0"
                        FontSize="14"
                        Foreground="#64748B" />
         </StackPanel>
 
         <Grid x:Name="PopupManualPanel" Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="340" />
-                <ColumnDefinition Width="18" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="18" />
-                <ColumnDefinition Width="320" />
-            </Grid.ColumnDefinitions>
-
-            <Border Style="{StaticResource Panel}">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
-                    <TextBlock Text="키워드 검색" FontSize="18" FontWeight="SemiBold" />
-                    <TextBox x:Name="PopupSearchTextBox" Grid.Row="1" Margin="0,12,0,12" TextChanged="PopupSearchTextBox_TextChanged" />
-                    <ListBox x:Name="PopupGuideListBox" Grid.Row="2" SelectionChanged="PopupGuideListBox_SelectionChanged">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,8">
-                                    <StackPanel>
-                                        <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" />
-                                        <TextBlock Text="{Binding Summary}" Margin="0,5,0,7" Foreground="#64748B" TextWrapping="Wrap" />
-                                        <TextBlock Text="{Binding KeywordsLabel}" Foreground="#2563EB" FontSize="12" TextWrapping="Wrap" />
-                                    </StackPanel>
-                                </Border>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                </Grid>
-            </Border>
-
-            <Border Grid.Column="2" Style="{StaticResource Panel}">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-                    <TextBlock x:Name="PopupTitleTextBlock" FontSize="25" FontWeight="Bold" Foreground="#0F172A" TextWrapping="Wrap" />
-                    <StackPanel Grid.Row="1" Margin="0,8,0,16">
-                        <TextBlock x:Name="PopupSummaryTextBlock" Foreground="#475569" TextWrapping="Wrap" />
-                        <TextBlock x:Name="PopupKeywordsTextBlock" Margin="0,8,0,0" Foreground="#64748B" TextWrapping="Wrap" />
-                    </StackPanel>
-                    <ScrollViewer Grid.Row="2">
-                        <ItemsControl x:Name="PopupStepsItemsControl">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid Margin="0,0,0,12">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="34" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-                                        <Border Width="26" Height="26" Background="#DBEAFE" CornerRadius="13" VerticalAlignment="Top">
-                                            <TextBlock Text="{Binding Number}" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold" Foreground="#1D4ED8" />
-                                        </Border>
-                                        <TextBlock Grid.Column="1" Text="{Binding Text}" TextWrapping="Wrap" Foreground="#334155" FontSize="15" />
-                                    </Grid>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </ScrollViewer>
-                    <Border Grid.Row="3" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="14">
-                        <StackPanel>
-                            <TextBlock Text="담당자 수정 권한" FontWeight="SemiBold" />
-                            <TextBlock x:Name="PopupOwnerTextBlock" Margin="0,5,0,0" TextWrapping="Wrap" Foreground="#475569" />
-                        </StackPanel>
-                    </Border>
-                </Grid>
-            </Border>
-
-            <Border Grid.Column="4" Style="{StaticResource Panel}">
-                <StackPanel>
-                    <TextBlock Text="댓글" FontSize="18" FontWeight="SemiBold" />
-                    <TextBlock Text="교수님, 선생님들이 처리 결과나 추가 문의를 남길 수 있습니다."
-                               Margin="0,5,0,12"
-                               Foreground="#64748B"
-                               TextWrapping="Wrap" />
-                    <ListBox x:Name="PopupCommentListBox" MinHeight="240" />
-                    <TextBox x:Name="PopupCommentInput" Margin="0,12,0,8" MinHeight="72" AcceptsReturn="True" TextWrapping="Wrap" />
-                    <Button Content="댓글 등록" Style="{StaticResource PrimaryButton}" Click="AddPopupCommentButton_Click" />
-                </StackPanel>
-            </Border>
-        </Grid>
-
-        <Grid x:Name="InquiryPanel" Grid.Row="1" Visibility="Collapsed">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="360" />
                 <ColumnDefinition Width="18" />
@@ -153,16 +165,50 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
-                    <TextBlock Text="문의사항 검색" FontSize="18" FontWeight="SemiBold" />
-                    <TextBox x:Name="InquirySearchTextBox" Grid.Row="1" Margin="0,12,0,12" TextChanged="InquirySearchTextBox_TextChanged" />
-                    <ListBox x:Name="InquiryListBox" Grid.Row="2" SelectionChanged="InquiryListBox_SelectionChanged">
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="팝업 메시지 매뉴얼" FontSize="18" FontWeight="SemiBold" Foreground="#0F172A" />
+                        <Button Grid.Column="1"
+                                Content="추가"
+                                Width="48"
+                                Style="{StaticResource SmallActionButton}"
+                                Click="NewPopupManualButton_Click" />
+                    </Grid>
+
+                    <TextBox x:Name="PopupSearchTextBox"
+                             Grid.Row="1"
+                             Margin="0,12,0,12"
+                             TextChanged="PopupSearchTextBox_TextChanged" />
+
+                    <ListBox x:Name="PopupGuideListBox"
+                             Grid.Row="2"
+                             BorderThickness="0"
+                             HorizontalContentAlignment="Stretch"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto"
+                             ItemContainerStyle="{StaticResource StretchListBoxItem}"
+                             SelectionChanged="PopupGuideListBox_SelectionChanged">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,8">
+                                <Border Background="#F8FAFC"
+                                        BorderBrush="#E2E8F0"
+                                        BorderThickness="1"
+                                        CornerRadius="6"
+                                        Padding="12"
+                                        Margin="0,0,0,8">
                                     <StackPanel>
-                                        <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" />
-                                        <TextBlock Text="{Binding Summary}" Margin="0,5,0,7" Foreground="#64748B" TextWrapping="Wrap" />
-                                        <TextBlock Text="{Binding KeywordsLabel}" Foreground="#2563EB" FontSize="12" TextWrapping="Wrap" />
+                                        <TextBlock Text="{Binding MetaLabel}"
+                                                   Foreground="#0E91F5"
+                                                   FontSize="12"
+                                                   FontWeight="SemiBold"
+                                                   Margin="0,0,0,6" />
+                                        <TextBlock Text="{Binding Message}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                        <TextBlock Text="{Binding Situation}" Margin="0,5,0,7" Foreground="#64748B" TextWrapping="Wrap" />
+                                        <TextBlock Text="{Binding KeywordsLabel}" Foreground="#0E91F5" FontSize="12" TextWrapping="Wrap" />
                                     </StackPanel>
                                 </Border>
                             </DataTemplate>
@@ -172,48 +218,168 @@
             </Border>
 
             <Border Grid.Column="2" Style="{StaticResource Panel}">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-                    <TextBlock x:Name="InquiryTitleTextBlock" FontSize="25" FontWeight="Bold" Foreground="#0F172A" TextWrapping="Wrap" />
-                    <StackPanel Grid.Row="1" Margin="0,8,0,16">
-                        <TextBlock x:Name="InquirySummaryTextBlock" Foreground="#475569" TextWrapping="Wrap" />
-                        <TextBlock x:Name="InquiryKeywordsTextBlock" Margin="0,8,0,0" Foreground="#64748B" TextWrapping="Wrap" />
-                    </StackPanel>
-                    <ScrollViewer Grid.Row="2">
-                        <ItemsControl x:Name="InquiryStepsItemsControl">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="0,0,12,0">
+                        <TextBlock Text="상세 내용" FontSize="20" FontWeight="Bold" Foreground="#0F172A" />
+
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="12" />
+                                <ColumnDefinition Width="3*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="분류" Style="{StaticResource FieldLabel}" />
+                                <ComboBox x:Name="PopupCategoryComboBox"
+                                          SelectedIndex="0"
+                                          Style="{StaticResource CategoryComboBox}">
+                                    <ComboBoxItem Content="진료/간호" />
+                                    <ComboBoxItem Content="원무/심사" />
+                                    <ComboBoxItem Content="진료지원" />
+                                    <ComboBoxItem Content="일반관리" />
+                                    <ComboBoxItem Content="인증서" />
+                                    <ComboBoxItem Content="네트워크" />
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="메뉴명" Style="{StaticResource FieldLabel}" />
+                                <TextBox x:Name="PopupMenuNameInput" />
+                            </StackPanel>
+                        </Grid>
+                        
+
+                        <TextBlock Text="메시지 내용(팝업으로 뜨는 메시지)" Style="{StaticResource FieldLabel}" />
+                        <TextBox x:Name="PopupMessageInput" MinHeight="54" AcceptsReturn="True" TextWrapping="Wrap" Margin="0,0,0,12" />
+
+                        <TextBlock Text="문제 상황" Style="{StaticResource FieldLabel}" />
+                        <TextBox x:Name="PopupSituationInput" MinHeight="78" AcceptsReturn="True" TextWrapping="Wrap" Margin="0,0,0,12" />
+
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="12" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="문의자" Style="{StaticResource FieldLabel}" />
+                                <TextBox x:Name="PopupRequesterInput" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="연락 가능 내선번호" Style="{StaticResource FieldLabel}" />
+                                <TextBox x:Name="PopupExtensionInput" />
+                            </StackPanel>
+                        </Grid>
+
+                        <Grid Margin="0,0,0,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="해결방안" Style="{StaticResource FieldLabel}" Margin="0,0,8,0" />
+                            <TextBlock Grid.Column="1"
+                                       Text="입력칸에서 Ctrl+V를 누르면 복사한 이미지가 추가됩니다."
+                                       Foreground="#64748B"
+                                       FontSize="12"
+                                       VerticalAlignment="Center"
+                                       TextWrapping="Wrap" />
+                        </Grid>
+                        <ItemsControl x:Name="PopupStepItemsControl" Margin="0,0,0,10">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Grid Margin="0,0,0,12">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="34" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-                                        <Border Width="26" Height="26" Background="#DCFCE7" CornerRadius="13" VerticalAlignment="Top">
-                                            <TextBlock Text="{Binding Number}" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold" Foreground="#15803D" />
-                                        </Border>
-                                        <TextBlock Grid.Column="1" Text="{Binding Text}" TextWrapping="Wrap" Foreground="#334155" FontSize="15" />
-                                    </Grid>
+                                    <Border Background="#F8FAFC"
+                                            BorderBrush="#E2E8F0"
+                                            BorderThickness="1"
+                                            CornerRadius="6"
+                                            Padding="12"
+                                            Margin="0,0,0,10">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding NumberLabel}" FontWeight="SemiBold" Foreground="#0F172A" />
+                                            <TextBox Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}"
+                                                     Margin="0,7,0,8"
+                                                     MinHeight="70"
+                                                     AcceptsReturn="True"
+                                                     TextWrapping="Wrap"
+                                                     PreviewKeyDown="StepTextBox_PreviewKeyDown" />
+                                            <ItemsControl ItemsSource="{Binding Images}">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <WrapPanel />
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Border BorderBrush="#CBD5E1"
+                                                                BorderThickness="1"
+                                                                Background="White"
+                                                                Padding="4"
+                                                                Margin="0,0,8,8">
+                                                            <Image Source="{Binding}" Width="120" Height="90" Stretch="Uniform" />
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                    </Border>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                    </ScrollViewer>
-                    <Border Grid.Row="3" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="14">
-                        <StackPanel>
-                            <TextBlock Text="문의 등록" FontWeight="SemiBold" />
-                            <TextBlock Text="동일 문의가 없으면 아래에 내용을 남겨 새 문의사항으로 접수할 수 있습니다."
-                                       Margin="0,5,0,10"
-                                       Foreground="#64748B"
-                                       TextWrapping="Wrap" />
-                            <TextBox x:Name="NewInquiryInput" MinHeight="72" AcceptsReturn="True" TextWrapping="Wrap" />
-                            <Button Content="문의 등록" Margin="0,10,0,0" Style="{StaticResource PrimaryButton}" Click="AddInquiryButton_Click" />
-                        </StackPanel>
-                    </Border>
-                </Grid>
+
+                        <Button Content="단계 추가"
+                                Width="90"
+                                HorizontalAlignment="Left"
+                                Style="{StaticResource SmallActionButton}"
+                                Click="AddPopupStepButton_Click" />
+
+                        <Grid Margin="0,16,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="키워드" Style="{StaticResource FieldLabel}" />
+                                <ItemsControl x:Name="PopupKeywordItemsControl" Margin="0,0,0,8">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="#EFF6FF"
+                                                    BorderBrush="#0E91F5"
+                                                    BorderThickness="1"
+                                                    CornerRadius="14"
+                                                    Padding="10,5"
+                                                    Margin="0,0,8,8">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="{Binding}" Foreground="#0E91F5" FontWeight="SemiBold" />
+                                                    <Button Content="x"
+                                                            Tag="{Binding}"
+                                                            Style="{StaticResource KeywordChipRemoveButton}"
+                                                            Click="RemovePopupKeywordButton_Click" />
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <TextBox x:Name="PopupKeywordInput"
+                                         PreviewKeyDown="PopupKeywordInput_PreviewKeyDown" />
+                            </StackPanel>
+                        </Grid>
+
+                        <Button Content="저장"
+                                Style="{StaticResource PrimaryButton}"
+                                Click="SavePopupManualButton_Click" />
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+
+        <Grid x:Name="InquiryPanel" Grid.Row="1" Visibility="Collapsed">
+            <Border Style="{StaticResource Panel}">
+                <TextBlock Text="문의사항 화면은 다음 단계에서 구성할 수 있습니다."
+                           FontSize="18"
+                           FontWeight="SemiBold"
+                           Foreground="#0F172A" />
             </Border>
         </Grid>
     </Grid>
