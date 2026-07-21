@@ -23,5 +23,9 @@
     <PackageReference Include="MySql.Data" Version="9.7.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\SEARCH.DTO\SEARCH.DTO.csproj" />
+  </ItemGroup>
+
   <ProjectExtensions><VisualStudio><UserProperties appsettings_1json__JsonSchema="" /></VisualStudio></ProjectExtensions>
 </Project>

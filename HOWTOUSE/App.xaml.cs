@@ -1,3 +1,5 @@
+using System.Net;
+using System.Net.Sockets;
 using System.Windows;
 
 namespace HOWTOUSE
@@ -17,6 +19,9 @@ namespace HOWTOUSE
                 return;
             }
 
+            string ipAddress = GetLocalIPAddress();
+            SessionContext.SetUser(loginWindow.EmployeeNo, loginWindow.UserName, ipAddress); // 사용자정보 세션 저장
+
             MainWindow mainWindow = new MainWindow();
             MainWindow = mainWindow;
             mainWindow.SetLoginUser(loginWindow.EmployeeNo, loginWindow.UserName);
@@ -24,5 +29,21 @@ namespace HOWTOUSE
             ShutdownMode = ShutdownMode.OnMainWindowClose;
             mainWindow.Show();
         }
+
+        private string GetLocalIPAddress()
+        {
+            var host = Dns.GetHostEntry(Dns.GetHostName());
+
+            foreach (var ip in host.AddressList)
+            {
+                if (ip.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    return ip.ToString();
+                }
+            }
+
+            return string.Empty;
+        }
     }
+
 }
