@@ -1,7 +1,7 @@
-﻿<Application x:Class="SEARCH.DAC.App"
+<Application x:Class="HOWTOUSE.DTO.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:SEARCH.DAC"
+             xmlns:local="clr-namespace:HOWTOUSE.DTO"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
          
