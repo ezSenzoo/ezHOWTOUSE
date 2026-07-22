@@ -67,16 +67,30 @@ namespace HOWTOUSE
                 return;
             }
 
+            if (selectedTodayTaskItem.TASK_DT == null)
+            {
+                MessageBox.Show("업무 일자를 선택해 주세요.", "EZHOWTOUSE", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            if (selectedTodayTaskItem.TRGT_TP_CD == "USER"
+                && string.IsNullOrWhiteSpace(selectedTodayTaskItem.TRGT_STF_NO))
+            {
+                MessageBox.Show("개인 업무는 대상 직원을 선택해 주세요.", "EZHOWTOUSE", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            long taskId;
+
             if (isNewTodayTaskMode)
             {
-                InsertTodayTask();
+                taskId = InsertTodayTask();
             }
             else
             {
                 UpdateTodayTask();
+                taskId = selectedTodayTaskItem.TASK_ID;
             }
-
-            long taskId = selectedTodayTaskItem.TASK_ID;
 
             LoadTodayTasks();
 
@@ -86,7 +100,17 @@ namespace HOWTOUSE
 
         private void SelectTodayTask(DutyPostItem item)
         {
-            if (item == null) return;
+            if (item == null)
+            {
+                selectedTodayTaskItem = null;
+                DetailPanel.DataContext = null;
+                TodayTaskEditorTitleTextBlock.Text = "상세 내용";
+                SaveTodayTaskButton.Content = "수정";
+                TargetUserComboBox.SelectedIndex = -1;
+                TargetUserComboBox.IsEnabled = false;
+                return;
+            }
+
             isNewTodayTaskMode = false;
 
             selectedTodayTaskItem = item.Clone();
@@ -95,16 +119,6 @@ namespace HOWTOUSE
             SaveTodayTaskButton.Content = "수정";
 
             DetailPanel.DataContext = selectedTodayTaskItem;
-
-            if (item == null)
-            {
-                DetailPanel.DataContext = null;
-
-                TargetUserComboBox.SelectedIndex = -1;
-                TargetUserComboBox.IsEnabled = false;
-
-                return;
-            }
 
             TargetUserComboBox.SelectedValue = item.TRGT_STF_NO;
             TargetUserComboBox.IsEnabled = item.TRGT_TP_CD == "USER";
@@ -116,6 +130,8 @@ namespace HOWTOUSE
             isLoading = true;
 
             todayTaskItems.Clear();
+            int totalTaskCount = 0;
+            int completedTaskCount = 0;
 
             const string query = @"
                                     SELECT
@@ -188,6 +204,12 @@ namespace HOWTOUSE
                         item.CMPL_YN = reader["CMPL_YN"].ToString();
                         item.IsCompleted = reader["CMPL_YN"].ToString() == "Y";
 
+                        totalTaskCount++;
+                        if (item.IsCompleted)
+                        {
+                            completedTaskCount++;
+                        }
+
 
                         if (reader["CMPL_DTM"] != DBNull.Value)
                         {
@@ -200,10 +222,14 @@ namespace HOWTOUSE
                         item.FSR_DTM = Convert.ToDateTime(reader["FSR_DTM"]);
                         item.LSH_DTM = Convert.ToDateTime(reader["LSH_DTM"]);
 
-                        todayTaskItems.Add(item);
+                        if (HideCompletedCheckBox.IsChecked != true || !item.IsCompleted)
+                        {
+                            todayTaskItems.Add(item);
+                        }
                     }
 
-                    //TaskCountTextBlock.Text = $"업무 {todayTaskItems.Count}건";
+                    int incompleteTaskCount = totalTaskCount - completedTaskCount;
+                    TaskCountTextBlock.Text = $"전체 {totalTaskCount}건 · 완료 {completedTaskCount}건 · 미완료 {incompleteTaskCount}건";
                 }
 
                 SelectTodayTask(todayTaskItems.FirstOrDefault());
@@ -219,7 +245,20 @@ namespace HOWTOUSE
             if (!IsLoaded)
                 return;
 
+            if (SearchTaskDatePicker.SelectedDate == null)
+            {
+                return;
+            }
+
             LoadTodayTasks();
+        }
+
+        private void HideCompletedCheckBox_Changed(object sender, RoutedEventArgs e)
+        {
+            if (IsLoaded)
+            {
+                LoadTodayTasks();
+            }
         }
 
         private void LoadStaffList()
@@ -341,11 +380,11 @@ WHERE TASK_ID = @TASK_ID";
             TargetUserComboBox.SelectedIndex = -1;
         }
 
-        private void InsertTodayTask()
+        private long InsertTodayTask()
         {
             if (selectedTodayTaskItem == null)
             {
-                return;
+                return 0;
             }
 
 
@@ -441,7 +480,56 @@ VALUES
                 connection.Open();
 
                 command.ExecuteNonQuery();
+                return command.LastInsertedId;
             }
+        }
+
+        private void DeleteTodayTaskButton_Click(object sender, RoutedEventArgs e)
+        {
+            DutyPostItem taskToDelete = (sender as Button)?.CommandParameter as DutyPostItem;
+
+            if (taskToDelete == null || taskToDelete.TASK_ID <= 0)
+            {
+                return;
+            }
+
+            MessageBoxResult result = MessageBox.Show(
+                $"'{taskToDelete.TASK_TITLE}' 업무를 삭제하시겠습니까?",
+                "삭제 확인",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (result != MessageBoxResult.Yes)
+            {
+                return;
+            }
+
+            const string query = @"
+UPDATE MOODUWKD
+SET
+    USE_YN = 'N',
+    LSH_DTM = NOW(),
+    LSH_STF_NO = @LSH_STF_NO,
+    LSH_PRGM_NM = @LSH_PRGM_NM,
+    LSH_IP_ADDR = @LSH_IP_ADDR
+WHERE TASK_ID = @TASK_ID
+  AND USE_YN = 'Y'
+  AND LST_YN = 'Y'";
+
+            using (MySqlConnection connection =
+                new MySqlConnection(AppSettings.Current.Database.ConnectionString))
+            using (MySqlCommand command = new MySqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@TASK_ID", taskToDelete.TASK_ID);
+                command.Parameters.AddWithValue("@LSH_STF_NO", SessionContext.STF_NO);
+                command.Parameters.AddWithValue("@LSH_PRGM_NM", "DutyTodayTaskView");
+                command.Parameters.AddWithValue("@LSH_IP_ADDR", SessionContext.IP_ADDRESS);
+
+                connection.Open();
+                command.ExecuteNonQuery();
+            }
+
+            LoadTodayTasks();
         }
 
         private void TaskCompleted_Click(object sender, RoutedEventArgs e)
