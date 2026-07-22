@@ -1,3 +1,4 @@
+using HOWTOUSE.DAC;
 using System.Windows;
 
 namespace HOWTOUSE
@@ -7,6 +8,7 @@ namespace HOWTOUSE
     {
         protected override void OnStartup(StartupEventArgs e)
         {
+            DapperConfig.Configure();
             base.OnStartup(e);
 
             LoginWindow loginWindow = new LoginWindow();
