@@ -67,6 +67,14 @@
             <Setter Property="MinWidth" Value="0" />
             <Setter Property="Height" Value="28" />
         </Style>
+        <Style x:Key="DeleteTextButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="#94A3B8" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="6,4" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
         <Style TargetType="TextBox">
             <Setter Property="BorderBrush" Value="#CBD5E1" />
             <Setter Property="BorderThickness" Value="1" />
@@ -93,6 +101,7 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
                     <!-- 제목 -->
@@ -100,14 +109,20 @@
                FontSize="20"
                FontWeight="Bold"
                Foreground="#0F172A"/>
-                    <!--<TextBlock
-    x:Name="TaskCountTextBlock"
-    Margin="0,4,0,0"
-    Foreground="#64748B"
-    FontSize="12"/>-->
+                    <Button Grid.Row="0"
+                            Width="48"
+                            HorizontalAlignment="Right"
+                            Content="추가"
+                            Style="{StaticResource SmallActionButton}"
+                            Click="NewTodayTaskButton_Click"/>
+                    <TextBlock x:Name="TaskCountTextBlock"
+                               Grid.Row="1"
+                               Margin="0,4,0,0"
+                               Foreground="#64748B"
+                               FontSize="12"/>
 
                     <!-- 조회조건 -->
-                    <Grid Grid.Row="1"
+                    <Grid Grid.Row="2"
           Margin="0,12,0,0">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
@@ -115,9 +130,8 @@
                         </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="160"/>
+                            <ColumnDefinition Width="130"/>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
                         <TextBlock Text="업무일자"
@@ -126,11 +140,13 @@
                         <DatePicker x:Name="SearchTaskDatePicker" Grid.Column="1" Margin="8,0,0,0" 
                                     SelectedDateChanged="SearchTaskDatePicker_SelectedDateChanged"/>
 
-                        <Button Grid.Column="3"
-                Width="48"
-                Content="추가"
-                Style="{StaticResource SmallActionButton}"
-                Click="NewTodayTaskButton_Click"/>
+                        <CheckBox x:Name="HideCompletedCheckBox"
+                                  Grid.Column="2"
+                                  Margin="12,0,0,0"
+                                  VerticalAlignment="Center"
+                                  Content="완료 업무 숨기기"
+                                  Checked="HideCompletedCheckBox_Changed"
+                                  Unchecked="HideCompletedCheckBox_Changed"/>
                         <!--<CheckBox Grid.Row="1"
           x:Name="IncludeUncompletedCheckBox"
           Margin="0,10,0,0"
@@ -163,6 +179,7 @@
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="30" />
                                         <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
                                     <CheckBox IsChecked="{Binding IsCompleted, Mode=TwoWay}" VerticalAlignment="Center" 
                                               Click="TaskCompleted_Click"/>
@@ -199,6 +216,12 @@
                                         <!--<TextBlock Margin="0,2,0,0" FontSize="11" Foreground="#EF4444" Text="{Binding OverdueText}" Visibility="{Binding OverdueVisibility}"/>-->
 
                                     </StackPanel>
+                                    <Button Grid.Column="2"
+                                            Content="삭제"
+                                            Margin="8,0,0,0"
+                                            Style="{StaticResource DeleteTextButton}"
+                                            CommandParameter="{Binding}"
+                                            Click="DeleteTodayTaskButton_Click"/>
 
                                 </Grid>
                             </Border>
