@@ -1,0 +1,10 @@
+﻿CREATE TABLE CRMWKSID (
+    MANU_NO     INT        NOT NULL COMMENT '매뉴얼ID',
+    STAGE_NO    INT        NOT NULL COMMENT '단계',
+    IMAGE_SEQ   INT        NOT NULL COMMENT '이미지순번',
+    IMAGE_DATA  MEDIUMBLOB NOT NULL COMMENT '첨부이미지',
+    PRIMARY KEY (MANU_NO, STAGE_NO, IMAGE_SEQ)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci
+  COMMENT='팝업 메시지 해결방안 이미지 테이블';

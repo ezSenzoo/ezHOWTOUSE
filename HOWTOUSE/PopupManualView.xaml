@@ -176,7 +176,7 @@
                                 Content="추가"
                                 Width="48"
                                 Style="{StaticResource SmallActionButton}"
-                                Click="NewPopupManualButton_Click" />
+                                Command="{Binding AddNewManualCommand}"/>
                     </Grid>
 
                     <TextBox x:Name="PopupSearchTextBox"
@@ -230,29 +230,28 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel>
                                 <TextBlock Text="분류" Style="{StaticResource FieldLabel}" />
-                                <ComboBox x:Name="PopupCategoryComboBox"
-                                          SelectedIndex="0"
+                                <ComboBox ItemsSource="{Binding CategoryItemList}"
+                                          SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
                                           Style="{StaticResource CategoryComboBox}">
-                                    <ComboBoxItem Content="진료/간호" />
-                                    <ComboBoxItem Content="원무/심사" />
-                                    <ComboBoxItem Content="진료지원" />
-                                    <ComboBoxItem Content="일반관리" />
-                                    <ComboBoxItem Content="인증서" />
-                                    <ComboBoxItem Content="네트워크" />
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding ComnCdNm}" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
                                 </ComboBox>
                             </StackPanel>
                             <StackPanel Grid.Column="2">
                                 <TextBlock Text="메뉴명" Style="{StaticResource FieldLabel}" />
-                                <TextBox x:Name="PopupMenuNameInput" />
+                                <TextBox Text="{Binding ManualTitle, UpdateSourceTrigger=PropertyChanged}" />
                             </StackPanel>
                         </Grid>
                         
 
                         <TextBlock Text="메시지 내용(팝업으로 뜨는 메시지)" Style="{StaticResource FieldLabel}" />
-                        <TextBox x:Name="PopupMessageInput" MinHeight="54" AcceptsReturn="True" TextWrapping="Wrap" Margin="0,0,0,12" />
+                        <TextBox Text="{Binding ManualPopupMessageContent, UpdateSourceTrigger=PropertyChanged}" MinHeight="54" AcceptsReturn="True" TextWrapping="Wrap" Margin="0,0,0,12" />
 
                         <TextBlock Text="문제 상황" Style="{StaticResource FieldLabel}" />
-                        <TextBox x:Name="PopupSituationInput" MinHeight="78" AcceptsReturn="True" TextWrapping="Wrap" Margin="0,0,0,12" />
+                        <TextBox Text="{Binding ManualProblemSituation, UpdateSourceTrigger=PropertyChanged}" MinHeight="78" AcceptsReturn="True" TextWrapping="Wrap" Margin="0,0,0,12" />
 
                         <Grid Margin="0,0,0,12">
                             <Grid.ColumnDefinitions>
@@ -262,11 +261,11 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel>
                                 <TextBlock Text="문의자" Style="{StaticResource FieldLabel}" />
-                                <TextBox x:Name="PopupRequesterInput" />
+                                <TextBox Text="{Binding InquirerName, UpdateSourceTrigger=PropertyChanged}" />
                             </StackPanel>
                             <StackPanel Grid.Column="2">
                                 <TextBlock Text="연락 가능 내선번호" Style="{StaticResource FieldLabel}" />
-                                <TextBox x:Name="PopupExtensionInput" />
+                                <TextBox Text="{Binding ContactNumber, UpdateSourceTrigger=PropertyChanged}" />
                             </StackPanel>
                         </Grid>
 
@@ -328,7 +327,7 @@
                                 Width="90"
                                 HorizontalAlignment="Left"
                                 Style="{StaticResource SmallActionButton}"
-                                Click="AddPopupStepButton_Click" />
+                                Command="{Binding AddStepCommand}" />
 
                         <Grid Margin="0,16,0,12">
                             <Grid.ColumnDefinitions>
@@ -361,14 +360,20 @@
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
-                                <TextBox x:Name="PopupKeywordInput"
-                                         PreviewKeyDown="PopupKeywordInput_PreviewKeyDown" />
+                                
+                                <TextBox Text="{Binding KeywordInputText, UpdateSourceTrigger=PropertyChanged}">
+                                    <TextBox.InputBindings>
+                                        <KeyBinding Key="Enter"
+                                                    Command="{Binding AddKeywordCommand}"/>
+                                    </TextBox.InputBindings>
+                                </TextBox>
+                                
                             </StackPanel>
                         </Grid>
 
-                        <Button Content="저장"
+                        <Button Content="{Binding ManualActionButtonText}"
                                 Style="{StaticResource PrimaryButton}"
-                                Click="SavePopupManualButton_Click" />
+                                Command="{Binding CurrentManualCommand}" />
                     </StackPanel>
                 </ScrollViewer>
             </Border>
